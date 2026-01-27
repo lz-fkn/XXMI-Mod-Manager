@@ -1,0 +1,19 @@
+{
+  "$schema": "https://wails.io/schemas/config.v2.json",
+  "name": "xxmimm",
+  "outputfilename": "xxmimm",
+  "frontend:install": "",
+  "frontend:build": "",
+  "frontend:dev:watcher": "",
+  "frontend:dev:serverUrl": "",
+  "author": {
+    "name": "Elzzie",
+    "email": "fractus.lol@proton.me"
+  },
+  "info": {
+    "companyName": "Elzzie",
+    "productName": "XXMI Mod Manager",
+    "productVersion": "1.0.0",
+    "copyright": "MIT License"
+  }
+}

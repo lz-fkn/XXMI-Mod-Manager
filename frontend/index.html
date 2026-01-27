@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="bg-container">
+        <div id="bg-layer-1" class="bg-layer active"></div>
+        <div id="bg-layer-2" class="bg-layer"></div>
+    </div>
+    <div id="app">
+        <div class="header">
+            <h2 style="letter-spacing: 3px;">XXMI MANAGER</h2>
+            <div class="tabs">
+                <button id="btn-list" class="tab-btn active" onclick="showTab('list')">Collection</button>
+                <button id="btn-add" class="tab-btn" onclick="showTab('add')">Import Mod</button>
+                <button id="btn-about" class="tab-btn" onclick="showTab('about')">About</button>
+            </div>
+        </div>
+
+        <div id="tab-list" class="content active">
+            <div class="toolbar">
+                <input type="text" id="search-input" placeholder="Search mods (name or description)..." oninput="renderList()">
+                <select id="sort-select" onchange="renderList()">
+                    <option value="date">Sort by Date</option>
+                    <option value="alpha">Sort by Name</option>
+                </select>
+            </div>
+
+            <div id="mod-container"></div>
+            <div class="save-bar" onclick="save()">APPLY CHANGES</div>
+        </div>
+
+        <div id="tab-add" class="content">
+            <div class="form-view">
+                <div class="field">
+                    <label>Mod Source Folder</label>
+                    <div class="row">
+                        <input type="text" id="in-path" readonly placeholder="No folder selected...">
+                        <button class="btn-sec" onclick="pickFolder()">BROWSE</button>
+                    </div>
+                </div>
+                <div class="field">
+                    <label>Mod Name</label>
+                    <input type="text" id="in-name">
+                </div>
+                <div class="field">
+                    <label>Description</label>
+                    <textarea id="in-desc" rows="3"></textarea>
+                </div>
+                <div class="field">
+                    <label>Linking Instruction</label>
+                    <select id="in-cmd">
+                        <option value="link folder to Mods;">link folder to Mods;</option>
+                        <option value="link files to Mods;">link files to Mods;</option>
+                        <option value="link files to ShaderFixes;">link files to ShaderFixes;</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Preview Image</label>
+                    <input type="file" id="in-img" accept="image/*" onchange="loadImg()">
+                </div>
+                <div class="form-view">
+                    <div class="field">
+                        <label>Source URL (Optional)</label>
+                        <input type="text" id="in-url" placeholder="https://...">
+                    </div>
+                </div>
+                <button class="btn-main" onclick="submit()">ADD TO COLLECTION</button>
+            </div>
+        </div>
+        <div id="tab-about" class="content">
+            <div class="form-view">
+                <div id="about-content" class="modal-text">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="desc-modal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-box">
+            <h3 id="modal-title">Mod Name</h3>
+            <div id="modal-desc" class="modal-text"></div>
+            <button class="btn-sec" style="margin-top: 15px; width: 100%;" onclick="closeModal('force')">CLOSE</button>
+        </div>
+    </div>
+    <div id="toast-container" style="position: fixed; bottom: 20px; left: 20px; z-index: 1000; pointer-events: none;"></div>
+    <script src="marked.umd.min.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
