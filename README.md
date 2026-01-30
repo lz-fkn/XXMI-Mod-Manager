@@ -22,6 +22,16 @@ simply put xxmimm.exe in the root folder of your xxmi loader, for example, in
 `C:\Users\User\AppData\Roaming\XXMI Launcher\ZZMI` in case of ZZMI.
 
 ---
+
+### todo
+- [ ] download mods from gamebanana
+- [ ] profiles
+- [ ] import/export of mods or whole profiles/modpacks
+- [ ] autodetect of the game
+- [ ] mod sorting by game
+- [ ] "play with/without mods" buttons
+
+---
 #### used stuff:
 * [Golang](https://go.dev/) (go1.25.5 windows/amd64)
 * [Wails](https://wails.io/) (v2.11.0)
