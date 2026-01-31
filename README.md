@@ -27,8 +27,8 @@ simply put xxmimm.exe in the root folder of your xxmi loader, for example, in
 - [ ] download mods from gamebanana
 - [ ] profiles
 - [ ] import/export of mods or whole profiles/modpacks
-- [ ] autodetect of the game
-- [ ] mod sorting by game
+- [x] autodetect of the game
+- [x] mod sorting by game
 - [ ] "play with/without mods" buttons
 
 ---

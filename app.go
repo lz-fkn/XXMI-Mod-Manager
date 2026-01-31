@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -34,6 +35,7 @@ type Mod struct {
 	Description string `json:"description"`
 	SourceURL   string `json:"source_url"`
 	Preview     string `json:"preview"`
+	Loader      string `json:"loader"`
 	InstallCmd  string `json:"install_cmd"`
 	Installed   bool   `json:"installed"`
 }
@@ -51,7 +53,7 @@ func (a *App) startup(ctx context.Context) {
 
 	a.db.Exec(`CREATE TABLE IF NOT EXISTS mods (
 		uuid TEXT PRIMARY KEY, name TEXT, description TEXT, 
-		source_url TEXT, preview BLOB, install_cmd TEXT, installed INTEGER DEFAULT 0
+		source_url TEXT, preview BLOB, loader TEXT, install_cmd TEXT, installed INTEGER DEFAULT 0
 	);`)
 }
 
@@ -70,15 +72,15 @@ func (a *App) sanitizePath(name string) string {
 	return strings.Trim(sanitized, "_")
 }
 
-func (a *App) GetMods() []Mod {
-	rows, _ := a.db.Query("SELECT uuid, name, description, source_url, preview, install_cmd, installed FROM mods")
+func (a *App) GetMods(loader string) []Mod {
+	rows, _ := a.db.Query("SELECT uuid, name, description, source_url, preview, loader, install_cmd, installed FROM mods WHERE loader = ?", loader)
 	defer rows.Close()
 	var mods []Mod
 	for rows.Next() {
 		var m Mod
 		var preview []byte
 		var inst int
-		rows.Scan(&m.UUID, &m.Name, &m.Description, &m.SourceURL, &preview, &m.InstallCmd, &inst)
+		rows.Scan(&m.UUID, &m.Name, &m.Description, &m.SourceURL, &preview, &m.Loader, &m.InstallCmd, &inst)
 		if len(preview) > 0 {
 			m.Preview = "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(preview)
 		}
@@ -88,7 +90,7 @@ func (a *App) GetMods() []Mod {
 	return mods
 }
 
-func (a *App) AddMod(name, desc, cmd, srcPath, previewB64, sourceURL string) string {
+func (a *App) AddMod(name, desc, cmd, srcPath, previewB64, sourceURL, loader string) string {
 	if name == "" || srcPath == ""  { return "Missing Required Info" }
 	
 	id := uuid.New().String()
@@ -102,7 +104,7 @@ func (a *App) AddMod(name, desc, cmd, srcPath, previewB64, sourceURL string) str
 	if err != nil {
 		if exitError, ok := err.(*exec.ExitError); ok {
 			if exitError.ExitCode() >= 8 {
-				return "Robocopy failed with exit code: " + string(rune(exitError.ExitCode()))
+				return "Robocopy failed with exit code: " + strconv.Itoa(exitError.ExitCode())
 			}
 		} else {
 			return "Failed to run robocopy: " + err.Error()
@@ -135,7 +137,48 @@ func (a *App) AddMod(name, desc, cmd, srcPath, previewB64, sourceURL string) str
 		}
 	}
 
-	_, err = a.db.Exec("INSERT INTO mods VALUES (?,?,?,?,?,?,0)", id, name, desc, sourceURL, imgBytes, cmd)
+	_, err = a.db.Exec("INSERT INTO mods VALUES (?,?,?,?,?,?,?,0)", id, name, desc, sourceURL, imgBytes, loader, cmd)
+	if err != nil { return err.Error() }
+	return "Success"
+}
+
+func (a *App) UpdateMod(uuid, name, desc, cmd, previewB64, sourceURL string) string {
+	if uuid == "" || name == "" { return "Missing Required Info" }
+
+	query := "UPDATE mods SET name=?, description=?, install_cmd=?, source_url=?"
+	args := []interface{}{name, desc, cmd, sourceURL}
+
+	if strings.Contains(previewB64, ",") {
+		raw := previewB64[strings.Index(previewB64, ",")+1:]
+		unprocBytes, err := base64.StdEncoding.DecodeString(raw)
+		if err == nil {
+			img, _, err := image.Decode(bytes.NewReader(unprocBytes))
+			if err == nil {
+				bounds := img.Bounds()
+				w, h := bounds.Dx(), bounds.Dy()
+				var newW, newH int
+				if w > h {
+					newW = 512
+					newH = (h * 512) / w
+				} else {
+					newH = 512
+					newW = (w * 512) / h
+				}
+
+				resizedImg := resize.Resize(uint(newW), uint(newH), img, resize.Lanczos3)
+				buf := new(bytes.Buffer)
+				jpeg.Encode(buf, resizedImg, &jpeg.Options{Quality: 85})
+
+				query += ", preview=?"
+				args = append(args, buf.Bytes())
+			}
+		}
+	}
+
+	query += " WHERE uuid=?"
+	args = append(args, uuid)
+
+	_, err := a.db.Exec(query, args...)
 	if err != nil { return err.Error() }
 	return "Success"
 }
@@ -218,31 +261,24 @@ func (a *App) removeLink(src, dst string, wildcard bool) {
 }
 
 func (a *App) mklink(src, dst string) error {
-	os.MkdirAll(filepath.Dir(dst), 0755)
-	
-	fi, err := os.Stat(src)
-	if err != nil { return err }
-
-	if _, err := os.Lstat(dst); err == nil { return nil }
-
-	var stderr bytes.Buffer
-	args := []string{"/c", "mklink"}
-	if fi.IsDir() {
-		args = append(args, "/d")
+	if err := os.MkdirAll(filepath.Dir(dst), 0755); err != nil {
+		return err
 	}
-	args = append(args, dst, src)
-	
-	cmd := exec.Command("cmd", args...)
-	cmd.Stderr = &stderr
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		HideWindow:    true,
-		CreationFlags: 0x08000000,
-	}
-	
-	err = cmd.Run()
+
+	_, err := os.Stat(src)
 	if err != nil {
-		return fmt.Errorf("%s", stderr.String())
+		return err
 	}
+
+	if _, err := os.Lstat(dst); err == nil {
+		return nil
+	}
+
+	err = os.Symlink(src, dst)
+	if err != nil {
+		return fmt.Errorf("failed to create symlink: %w", err)
+	}
+
 	return nil
 }
 
@@ -252,4 +288,12 @@ func (a *App) DeleteMod(id string) string {
 	err = os.RemoveAll(filepath.Join(a.root, id))
 	if err != nil { return err.Error() }
 	return "Success"
+}
+
+func (a *App) GetParentFolderName() string {
+	exe, err := os.Executable()
+	if err != nil {
+		return ""
+	}
+	return filepath.Base(filepath.Dir(exe))
 }

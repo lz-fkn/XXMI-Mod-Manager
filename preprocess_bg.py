@@ -1,17 +1,20 @@
 import sys
 from PIL import Image, ImageFilter, ImageEnhance
 
-INPUT_FILE = sys.argv[1]
-OUTPUT_FILE = "frontend/assets/images/" + sys.argv[2]
-TARGET_WIDTH = 1200
-TARGET_HEIGHT = 800
+INPUT_FILE = sys.argv[2]
+OUTPUT_FILE = f"frontend/assets/images/{sys.argv[1]}/bg{sys.argv[3]}.jpg"
+TARGET_WIDTH = 1366
+TARGET_HEIGHT = 768
 
 def process_image():
     try:
         img = Image.open(INPUT_FILE)
     except FileNotFoundError:
-        print(f"Error: {INPUT_FILE} not found. Please place an image named '{INPUT_FILE}' in the root.")
+        print(f"Error: {INPUT_FILE} not found.")
         return
+    
+    if img.mode in ("RGBA", "P"):
+        img = img.convert("RGB")
 
     img_ratio = img.width / img.height
     target_ratio = TARGET_WIDTH / TARGET_HEIGHT

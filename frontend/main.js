@@ -1,5 +1,7 @@
+let appModeFolder = "";
 let currentImg = "";
 let loadedModsCache = [];
+let currentEditImgStr = "";
 
 let currentBgIndex = 1;
 const maxBgImages = 9;
@@ -13,7 +15,13 @@ function rotateBackground() {
     const nextLayer = activeLayer === layer1 ? layer2 : layer1;
 
     currentBgIndex = (currentBgIndex % maxBgImages) + 1;
-    const nextImgUrl = `assets/images/bg${currentBgIndex}.jpg`;
+
+    let nextImgUrl = "";
+    if (appModeFolder) {
+        nextImgUrl = `assets/images/${appModeFolder}/bg${currentBgIndex}.jpg`;
+    } else {
+        nextImgUrl = `assets/images/bg${currentBgIndex}.jpg`;
+    }
 
     nextLayer.style.backgroundImage = `url('${nextImgUrl}')`;
     
@@ -48,8 +56,20 @@ function loadImg() {
     reader.readAsDataURL(file);
 }
 
+function loadEditImg() {
+    const file = document.getElementById('edit-img').files[0];
+    const reader = new FileReader();
+    reader.onloadend = () => {
+        currentEditImgStr = reader.result;
+        const prev = document.getElementById('edit-img-preview');
+        prev.src = currentEditImgStr;
+        prev.style.display = 'block';
+    };
+    reader.readAsDataURL(file);
+}
+
 async function loadMods() {
-    const mods = await window.go.main.App.GetMods() || [];
+    const mods = await window.go.main.App.GetMods(appModeFolder) || [];
     loadedModsCache = mods;
 
     renderList();
@@ -103,6 +123,7 @@ function renderList() {
             <div class="mod-actions">
                 <input type="checkbox" class="mod-chk" data-id="${m.uuid}" ${m.installed ? 'checked' : ''}>
                 <button onclick="openModal('${m.uuid}')" title="View Description" style="background:none; border:none; cursor:pointer; font-size:18px;">ℹ️</button>
+                <button onclick="openEdit('${m.uuid}')" title="Edit Mod" style="background:none; border:none; cursor:pointer; font-size:18px;">✏️</button>
                 <button onclick="del('${m.uuid}')" title="Delete Mod" style="background:none; border:none; color:#d9534f; cursor:pointer;">❌</button>
             </div>
         `;
@@ -133,7 +154,14 @@ function openModal(uuid) {
     if (!mod) return;
     
     const modalDesc = document.getElementById('modal-desc');
+    const modalUuid = document.getElementById('modal-uuid');
+
     document.getElementById('modal-title').innerText = mod.name;
+    
+    if (modalUuid) {
+        modalUuid.innerText = `ID: ${mod.uuid}`;
+    }
+
     modalDesc.innerHTML = marked.parse(mod.description);
 
     modalDesc.querySelectorAll('a').forEach(link => {
@@ -159,12 +187,14 @@ async function submit() {
     const nameEl = document.getElementById('in-name');
     const pathEl = document.getElementById('in-path');
     const cmdEl = document.getElementById('in-cmd');
+    const loaderEl = document.getElementById('in-loader');
     
     const name = nameEl.value.trim();
     const desc = document.getElementById('in-desc').value;
     const path = pathEl.value;
     const cmdValue = cmdEl.value;
     const url = document.getElementById('in-url').value;
+    const loader = loaderEl ? loaderEl.value : '';
 
     let hasError = false;
 
@@ -182,15 +212,58 @@ async function submit() {
 
     if (hasError) return;
 
-    const res = await window.go.main.App.AddMod(name, desc, cmdValue, path, currentImg, url);
+    const res = await window.go.main.App.AddMod(name, desc, cmdValue, path, currentImg, url, loader);
     if(res === "Success") {
         showToast("Mod imported successfully.");
-        /* document.getElementById('in-name').value = ''; -- DO NOT CLEAN UP all those for now 
-        document.getElementById('in-desc').value = '';
-        document.getElementById('in-path').value = '';
-        document.getElementById('in-url').value = ''; 
-        cmdEl.value = '';
-        currentImg = ""; */
+        showTab('list');
+    } else {
+        showToast(res);
+    }
+}
+
+function openEdit(uuid) {
+    const mod = loadedModsCache.find(m => m.uuid === uuid);
+    if (!mod) return;
+
+    currentEditImgStr = ""; 
+    document.getElementById('edit-img').value = "";
+
+    document.getElementById('edit-uuid').value = mod.uuid;
+    document.getElementById('edit-name').value = mod.name;
+    document.getElementById('edit-desc').value = mod.description;
+    document.getElementById('edit-cmd').value = mod.install_cmd;
+    document.getElementById('edit-url').value = mod.source_url;
+
+    const prev = document.getElementById('edit-img-preview');
+    if (mod.preview) {
+        prev.src = mod.preview;
+        prev.style.display = 'block';
+    } else {
+        prev.style.display = 'none';
+    }
+
+    document.querySelectorAll('.content').forEach(c => c.classList.remove('active'));
+    document.getElementById('tab-edit').classList.add('active');
+
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+}
+
+async function submitEdit() {
+    const uuid = document.getElementById('edit-uuid').value;
+    const name = document.getElementById('edit-name').value.trim();
+    const desc = document.getElementById('edit-desc').value;
+    const cmd = document.getElementById('edit-cmd').value;
+    const url = document.getElementById('edit-url').value;
+    
+    if (!name || !uuid) {
+        showToast("Name is required.");
+        return;
+    }
+
+    const res = await window.go.main.App.UpdateMod(uuid, name, desc, cmd, currentEditImgStr, url);
+    
+    if (res === "Success") {
+        showToast("Mod updated successfully.");
         showTab('list');
     } else {
         showToast(res);
@@ -251,12 +324,31 @@ function renderAbout() {
     }
 }
 
-window.onload = () => {
+window.onload = async () => {
+    const parentName = await window.go.main.App.GetParentFolderName();
+
+    const validFolders = ["ZZMI", "GIMI", "SRMI", "WWMI", "HIMI"]; 
+    if (validFolders.includes(parentName)) {
+        appModeFolder = parentName;
+        document.getElementById('app-title').innerText = `XXMI MOD MANAGER (${appModeFolder})`;
+    }
+
+    const loaderSelect = document.getElementById('in-loader');
+    if (loaderSelect && appModeFolder) {
+        loaderSelect.value = appModeFolder;
+    }
+
     loadMods();
     renderAbout();
+    
     const l1 = document.getElementById('bg-layer-1');
     if (l1) {
-        l1.style.backgroundImage = "url('assets/images/bg1.jpg')";
+        let startImg = "assets/images/bg1.jpg";
+        if (appModeFolder) {
+            startImg = `assets/images/${appModeFolder}/bg1.jpg`;
+        }
+        
+        l1.style.backgroundImage = `url('${startImg}')`;
         l1.classList.add('active');
     }
     setInterval(rotateBackground, changeBgInterval);

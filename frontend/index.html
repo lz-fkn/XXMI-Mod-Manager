@@ -11,7 +11,7 @@
     </div>
     <div id="app">
         <div class="header">
-            <h2 style="letter-spacing: 3px;">XXMI MANAGER</h2>
+            <h2 id="app-title" style="letter-spacing: 3px;">XXMI MOD MANAGER</h2>
             <div class="tabs">
                 <button id="btn-list" class="tab-btn active" onclick="showTab('list')">Collection</button>
                 <button id="btn-add" class="tab-btn" onclick="showTab('add')">Import Mod</button>
@@ -58,6 +58,16 @@
                     </select>
                 </div>
                 <div class="field">
+                    <label>Loader</label>
+                    <select id="in-loader">
+                        <option value="GIMI">GIMI</option>
+                        <option value="HIMI">HIMI</option>
+                        <option value="SRMI">SRMI</option>
+                        <option value="WWMI">WWMI</option>
+                        <option value="ZZMI">ZZMI</option>
+                    </select>
+                </div>
+                <div class="field">
                     <label>Preview Image</label>
                     <input type="file" id="in-img" accept="image/*" onchange="loadImg()">
                 </div>
@@ -68,6 +78,49 @@
                     </div>
                 </div>
                 <button class="btn-main" onclick="submit()">ADD TO COLLECTION</button>
+            </div>
+        </div>
+        <div id="tab-edit" class="content">
+            <div class="form-view">
+                <input type="hidden" id="edit-uuid">
+                <h3 style="margin-bottom: 20px;">Edit Mod Details</h3>
+                
+                <div class="field">
+                    <label>Mod Name</label>
+                    <input type="text" id="edit-name">
+                </div>
+                
+                <div class="field">
+                    <label>Description</label>
+                    <textarea id="edit-desc" rows="3"></textarea>
+                </div>
+                
+                <div class="field">
+                    <label>Linking Instruction</label>
+                    <select id="edit-cmd">
+                        <option value="link folder to Mods;">link folder to Mods;</option>
+                        <option value="link files to Mods;">link files to Mods;</option>
+                        <option value="link files to ShaderFixes;">link files to ShaderFixes;</option>
+                    </select>
+                </div>
+                
+                <div class="field">
+                    <label>Change Preview Image (Optional)</label>
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                        <img id="edit-img-preview" src="" style="height:50px; border-radius:4px; display:none;">
+                        <input type="file" id="edit-img" accept="image/*" onchange="loadEditImg()">
+                    </div>
+                </div>
+                
+                <div class="field">
+                    <label>Source URL (Optional)</label>
+                    <input type="text" id="edit-url" placeholder="https://...">
+                </div>
+
+                <div class="row" style="margin-top:20px;">
+                    <button class="btn-sec" onclick="showTab('list')">CANCEL</button>
+                    <button class="btn-main" onclick="submitEdit()">SAVE CHANGES</button>
+                </div>
             </div>
         </div>
         <div id="tab-about" class="content">
@@ -81,6 +134,7 @@
     <div id="desc-modal" class="modal-overlay" onclick="closeModal(event)">
         <div class="modal-box">
             <h3 id="modal-title">Mod Name</h3>
+            <div id="modal-uuid" style="font-family: monospace; font-size: 0.8em; color: #888; margin-bottom: 10px;"></div>
             <div id="modal-desc" class="modal-text"></div>
             <button class="btn-sec" style="margin-top: 15px; width: 100%;" onclick="closeModal('force')">CLOSE</button>
         </div>
