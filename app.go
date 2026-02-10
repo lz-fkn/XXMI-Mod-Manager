@@ -27,6 +27,7 @@ type App struct {
 	ctx  context.Context
 	db   *sql.DB
 	root string
+	spoofName string
 }
 
 type Mod struct {
@@ -291,6 +292,10 @@ func (a *App) DeleteMod(id string) string {
 }
 
 func (a *App) GetParentFolderName() string {
+	if a.spoofName != "" {
+		return a.spoofName
+	}
+
 	exe, err := os.Executable()
 	if err != nil {
 		return ""

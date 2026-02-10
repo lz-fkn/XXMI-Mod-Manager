@@ -3,6 +3,7 @@ package main
 import (
 	"embed"
 	"log"
+	"os"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/logger"
@@ -16,6 +17,14 @@ var assets embed.FS
 
 func main() {
 	app := NewApp()
+
+	args := os.Args[1:]
+	for i := 0; i < len(args); i++ {
+		if args[i] == "--game" && i+1 < len(args) {
+			app.spoofName = args[i+1]
+			break
+		}
+	}
 
 	err := wails.Run(&options.App{
 		Title:  "XXMI Mod Manager",
