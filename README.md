@@ -1,5 +1,5 @@
 # XXMI Manager
-*rather simple mod manager for XXMI mods (ZZZ, GI, HSR, WuWa (i think))*
+*rather simple mod manager for XXMI mods (ZZZ, GI, HSR, HI3, WuWa, EF)*
 ![](XXMI_Mod_Manager.jpg)
 
 ---
@@ -38,4 +38,4 @@ simply put xxmimm.exe in the root folder of your xxmi loader, for example, in
 * [Marked.js](https://github.com/markedjs/marked) (v17.0.1)
 
 ---
-Elzzie. 2026, MIT License
+Elzzie. 2026, MIT License. Background images are property of their respective copyright holders (HoYoverse, Kuro Games, Gryphline).
