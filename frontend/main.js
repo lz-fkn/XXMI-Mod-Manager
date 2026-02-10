@@ -299,7 +299,7 @@ const aboutMarkdown = `
 
 made it when i've realised that i need some easy way to toggle on and off the mods on the fly, so here it is. it works by creating a symlink to the mod, simple as that.<br>
 
-by [Elzzie](https://github.com/lz-fkn), 27.01.2026. MIT License<br>
+by [Elzzie](https://github.com/lz-fkn), 10.02.2026. MIT License<br>
 
 used stuff:
 * [Golang](https://go.dev/) (go1.25.5 windows/amd64)
@@ -327,10 +327,10 @@ function renderAbout() {
 window.onload = async () => {
     const parentName = await window.go.main.App.GetParentFolderName();
 
-    const validFolders = ["ZZMI", "GIMI", "SRMI", "WWMI", "HIMI"]; 
+    const validFolders = ["ZZMI", "GIMI", "SRMI", "WWMI", "HIMI", "EFMI"]; 
     if (validFolders.includes(parentName)) {
         appModeFolder = parentName;
-        document.getElementById('app-title').innerText = `XXMI MOD MANAGER (${appModeFolder})`;
+        document.getElementById('app-title').innerText = `${appModeFolder} MOD MANAGER`;
     }
 
     const loaderSelect = document.getElementById('in-loader');
