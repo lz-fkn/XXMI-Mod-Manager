@@ -4,7 +4,8 @@
 
 ---
 
-made it when i realised that i need some easy way to toggle on and off the mods on the fly, so here it is. it works by creating a symlink to the mod, simple as that.
+made it when i realised that i need some easy way to toggle the mods on and off on the fly, so here it is. it works by creating a symlink to the mod, simple as that.
+(yes i am aware that other solutions already exist, i've realised that only after publishing the v1.0.0... pick your poison either way)
 
 ---
 ### build
