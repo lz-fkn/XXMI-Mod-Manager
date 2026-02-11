@@ -1,6 +1,6 @@
 # XXMI Manager
 *rather simple mod manager for XXMI mods (ZZZ, GI, HSR, HI3, WuWa, EF)*
-![](XXMI_Mod_Manager.jpg)
+![XXMI Mod Manage screenshot](XXMI_Mod_Manager.jpg)
 
 ---
 
@@ -30,7 +30,7 @@ simply put xxmimm.exe in the root folder of your xxmi loader, for example, in
 - [ ] import/export of mods or whole profiles/modpacks
 - [x] autodetect of the game
 - [x] mod sorting by game
-- [ ] "play with/without mods" buttons
+- [x] "play with/without mods" buttons
 
 ---
 #### used stuff:
