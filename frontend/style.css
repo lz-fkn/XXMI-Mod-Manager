@@ -217,6 +217,28 @@ select option {
     z-index: 10;
 }
 
+.bottom-actions {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+}
+
+.bottom-actions .save-bar {
+    position: static;
+    margin: 0;
+}
+
+.run-btn {
+    background: #2c5da7 !important;
+}
+
+.run-btn:hover {
+    background: #3a7bd5 !important;
+}
+
 .modal-overlay {
     display: none;
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;

@@ -21,6 +21,8 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/nfnt/resize"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+
+	"xxmimm/internal/xxmi"
 )
 
 type App struct {
@@ -301,4 +303,33 @@ func (a *App) GetParentFolderName() string {
 		return ""
 	}
 	return filepath.Base(filepath.Dir(exe))
+}
+
+func (a *App) StartGameWithMods(loader string) string {
+	launcherPath, err := xxmi.GetLauncherFilepath()
+	if err != nil {
+		return err.Error()
+	}
+	cmd := exec.Command(launcherPath, "--nogui", "--xxmi", loader)
+	cmd.Dir = filepath.Dir(launcherPath)
+	err = cmd.Start()
+	if err != nil {
+		return err.Error()
+	}
+	return "Success"
+}
+
+func (a *App) StartGameWithoutMods(loader string) string {
+	gameDir, gameExe, err := xxmi.GetGameFilepath(loader)
+	if err != nil {
+		return err.Error()
+	}
+	fullPath := filepath.Join(gameDir, gameExe)
+	cmd := exec.Command(fullPath)
+	cmd.Dir = gameDir
+	err = cmd.Start()
+	if err != nil {
+		return err.Error()
+	}
+	return "Success"
 }

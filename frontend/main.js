@@ -221,6 +221,24 @@ async function submit() {
     }
 }
 
+async function startGame(withMods) {
+    if (!appModeFolder) {
+        showToast("Error: No loader detected.");
+        return;
+    }
+
+    let res = "";
+    if (withMods) {
+        res = await window.go.main.App.StartGameWithMods(appModeFolder);
+    } else {
+        res = await window.go.main.App.StartGameWithoutMods(appModeFolder);
+    }
+
+    if (res) {
+        showToast(res);
+    }
+}
+
 function openEdit(uuid) {
     const mod = loadedModsCache.find(m => m.uuid === uuid);
     if (!mod) return;
@@ -293,18 +311,19 @@ async function del(id) {
 
 const aboutMarkdown = `
 # XXMI Manager
-*rather simple mod manager for XXMI mods (ZZZ, GI, HSR, WuWa (i think))*
+*rather simple mod manager for XXMI mods (ZZZ, GI, HSR, HI3, WuWa, EF)*
 
 ---
 
-made it when i've realised that i need some easy way to toggle on and off the mods on the fly, so here it is. it works by creating a symlink to the mod, simple as that.<br>
-
-by [Elzzie](https://github.com/lz-fkn), 10.02.2026. MIT License<br>
+made it when i realised that i need some easy way to toggle the mods on and off on the fly, so here it is. it works by creating a symlink to the mod, simple as that.
+(yes i am aware that other solutions already exist, i've realised that only after publishing the v1.0.0... pick your poison either way)<br>
 
 used stuff:
 * [Golang](https://go.dev/) (go1.25.5 windows/amd64)
 * [Wails](https://wails.io/) (v2.11.0)
 * [Marked.js](https://github.com/markedjs/marked) (v17.0.1)
+
+Elzzie. 2026, MIT License. Background images are property of their respective copyright holders (HoYoverse, Kuro Games, Gryphline).<br>
 `;
 
 function renderAbout() {
