@@ -17,12 +17,10 @@ type Config struct {
 }
 
 func GetGameFilepath(loaderName string) (string, string, error) {
-	appData := os.Getenv("APPDATA")
-	if appData == "" {
-		return "", "", fmt.Errorf("APPDATA environment variable not set")
-	}
-
-	configPath := filepath.Join(appData, "XXMI Launcher", "XXMI Launcher Config.json")
+	configPath, err := filepath.Abs(filepath.Join("..", "XXMI Launcher Config.json"))
+	if err != nil {
+        return "", "", fmt.Errorf("could not find config file: %w", err)
+    }
 
 	data, err := os.ReadFile(configPath)
 	if err != nil {
@@ -52,11 +50,10 @@ func GetGameFilepath(loaderName string) (string, string, error) {
 }
 
 func GetLauncherFilepath() (string, error) {
-	appData := os.Getenv("APPDATA")
-	if appData == "" {
-		return "", fmt.Errorf("APPDATA environment variable not set")
-	}
-	launcherPath := filepath.Join(appData, "XXMI Launcher", "Resources", "Bin", "XXMI Launcher.exe")
-	
-	return launcherPath, nil
+    launcherPath, err := filepath.Abs(filepath.Join("..", "Resources", "Bin", "XXMI Launcher.exe"))
+    if err != nil {
+        return "", err
+    }
+
+    return launcherPath, nil
 }
