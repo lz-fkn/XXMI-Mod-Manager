@@ -1,6 +1,6 @@
 # XXMI Manager
 *rather simple mod manager for XXMI mods (ZZZ, GI, HSR, HI3, WuWa, EF)*
-![XXMI Mod Manage screenshot](XXMI_Mod_Manager.jpg)
+![XXMI Mod Manager screenshot](https://github.com/lz-fkn/XXMI-Mod-Manager/raw/main/XXMI_Mod_Manager.jpg)
 
 ---
 
