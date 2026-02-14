@@ -7,6 +7,56 @@ let currentBgIndex = 1;
 const maxBgImages = 9;
 const changeBgInterval = 30000;
 
+
+const aboutApp = `
+# XXMI Manager
+*rather simple mod manager for XXMI mods (ZZZ, GI, HSR, HI3, WuWa, EF)*
+
+---
+
+made it when i realised that i need some easy way to toggle the mods on and off on the fly, so here it is. it works by creating a symlink to the mod, simple as that.
+(yes i am aware that other solutions already exist, i've realised that only after publishing the v1.0.0... pick your poison either way)<br>
+
+used stuff:
+* [Golang](https://go.dev/) (go1.25.5 windows/amd64)
+* [Wails](https://wails.io/) (v2.11.0)
+* [Marked.js](https://github.com/markedjs/marked) (v17.0.1)
+
+Elzzie. 2026, MIT License. Background images are property of their respective copyright holders (HoYoverse, Kuro Games, Gryphline).<br>
+`;
+
+const howToMarkdown = `
+*\\*italic\\**<br>
+**\\*\\*bold\\*\\***<br>
+***\\*\\*\\*bold-italic\\*\\*\\****<br>
+line ----
+
+----
+
+# # BIGGER
+## ## Big
+### ### average
+#### #### small
+##### ##### tiny
+
+\`\`\`
+|         | column1 | column2 |
+|---------|---------|---------|
+|   row1  |  val11  |  val12  |
+|   row2  |  val21  |  val22  |
+\`\`\`
+|         | column1 | column2 |
+|---------|---------|---------|
+|   row1  |  val11  |  val12  |
+|   row2  |  val21  |  val22  |
+
+!\\[embed image](https://example.com/image.jpg)<br>
+![pfp](https://avatars.githubusercontent.com/u/65544388?v=4)
+
+\\[hyperlink](https://example.com)<br>
+[my github](https://github.com/lz-fkn)
+`;
+
 function rotateBackground() {
     const layer1 = document.getElementById('bg-layer-1');
     const layer2 = document.getElementById('bg-layer-2');
@@ -115,7 +165,7 @@ function renderList() {
             : m.name;
 
         card.innerHTML = `
-            <img class="mod-img" src="${m.preview || ''}">
+            <img class="mod-img" src="${m.preview || ''}" onclick="openImgModal('${m.preview || ''}')" style="cursor: zoom-in;">
             <div class="mod-details">
                 <div class="mod-name">${nameHTML}</div>
                 <div class="mod-desc">${m.description}</div>
@@ -180,6 +230,44 @@ function openModal(uuid) {
 function closeModal(e) {
     if (e === 'force' || e.target.id === 'desc-modal') {
         document.getElementById('desc-modal').classList.remove('active');
+    }
+}
+
+function openPreviewModal(textareaId) {
+    const textarea = document.getElementById(textareaId);
+    const content = textarea ? textarea.value : '';
+    const previewContent = document.getElementById('preview-content');
+    
+    previewContent.innerHTML = marked.parse(content);
+    
+    previewContent.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const url = link.getAttribute('href');
+            if (url) {
+                window.go.main.App.OpenBrowser(url);
+            }
+        });
+    });
+    
+    document.getElementById('preview-modal').classList.add('active');
+}
+
+function closePreviewModal(e) {
+    if (e === 'force' || e.target.id === 'preview-modal') {
+        document.getElementById('preview-modal').classList.remove('active');
+    }
+}
+
+function openHowToModal() {
+    const howtoContent = document.getElementById('howto-content');
+    howtoContent.innerHTML = marked.parse(howToMarkdown);
+    document.getElementById('howto-modal').classList.add('active');
+}
+
+function closeHowToModal(e) {
+    if (e === 'force' || e.target.id === 'howto-modal') {
+        document.getElementById('howto-modal').classList.remove('active');
     }
 }
 
@@ -309,27 +397,10 @@ async function del(id) {
     }
 }
 
-const aboutMarkdown = `
-# XXMI Manager
-*rather simple mod manager for XXMI mods (ZZZ, GI, HSR, HI3, WuWa, EF)*
-
----
-
-made it when i realised that i need some easy way to toggle the mods on and off on the fly, so here it is. it works by creating a symlink to the mod, simple as that.
-(yes i am aware that other solutions already exist, i've realised that only after publishing the v1.0.0... pick your poison either way)<br>
-
-used stuff:
-* [Golang](https://go.dev/) (go1.25.5 windows/amd64)
-* [Wails](https://wails.io/) (v2.11.0)
-* [Marked.js](https://github.com/markedjs/marked) (v17.0.1)
-
-Elzzie. 2026, MIT License. Background images are property of their respective copyright holders (HoYoverse, Kuro Games, Gryphline).<br>
-`;
-
 function renderAbout() {
     const container = document.getElementById('about-content');
     if (container) {
-        container.innerHTML = marked.parse(aboutMarkdown);
+        container.innerHTML = marked.parse(aboutApp);
 
         container.querySelectorAll('a').forEach(link => {
             link.addEventListener('click', (e) => {
@@ -340,6 +411,18 @@ function renderAbout() {
                 }
             });
         });
+    }
+}
+
+function openImgModal(src) {
+    if (!src) return;
+    document.getElementById('img-modal-content').src = src;
+    document.getElementById('img-modal').classList.add('active');
+}
+
+function closeImgModal(e) {
+    if (e === 'force' || e.target.id === 'img-modal') {
+        document.getElementById('img-modal').classList.remove('active');
     }
 }
 

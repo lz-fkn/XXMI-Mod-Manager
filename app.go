@@ -86,6 +86,8 @@ func (a *App) GetMods(loader string) []Mod {
 		rows.Scan(&m.UUID, &m.Name, &m.Description, &m.SourceURL, &preview, &m.Loader, &m.InstallCmd, &inst)
 		if len(preview) > 0 {
 			m.Preview = "data:image/jpeg;base64," + base64.StdEncoding.EncodeToString(preview)
+		} else {
+			m.Preview = "assets/images/no_preview.jpg"
 		}
 		m.Installed = inst == 1
 		mods = append(mods, m)

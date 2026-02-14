@@ -52,6 +52,10 @@
                 </div>
                 <div class="field">
                     <label>Description</label>
+                    <div class="desc-actions">
+                        <button class="btn-sec btn-small" onclick="openPreviewModal('in-desc')">Preview</button>
+                        <button class="btn-sec btn-small" onclick="openHowToModal()">How-to</button>
+                    </div>
                     <textarea id="in-desc" rows="3"></textarea>
                 </div>
                 <div class="field">
@@ -98,6 +102,10 @@
                 
                 <div class="field">
                     <label>Description</label>
+                    <div class="desc-actions">
+                        <button class="btn-sec btn-small" onclick="openPreviewModal('edit-desc')">Preview</button>
+                        <button class="btn-sec btn-small" onclick="openHowToModal()">How-to</button>
+                    </div>
                     <textarea id="edit-desc" rows="3"></textarea>
                 </div>
                 
@@ -145,6 +153,29 @@
             <button class="btn-sec" style="margin-top: 15px; width: 100%;" onclick="closeModal('force')">CLOSE</button>
         </div>
     </div>
+
+    <div id="img-modal" class="modal-overlay" onclick="closeImgModal(event)">
+        <div class="modal-box" style="max-width: 90%; max-height: 90%; padding: 0; background: transparent; box-shadow: none;">
+            <img id="img-modal-content" src="" style="max-width: 100%; max-height: 90vh; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+        </div>
+    </div>
+
+    <div id="preview-modal" class="modal-overlay" onclick="closePreviewModal(event)">
+        <div class="modal-box">
+            <h3>Description Preview</h3>
+            <div id="preview-content" class="modal-text"></div>
+            <button class="btn-sec" style="margin-top: 15px; width: 100%;" onclick="closePreviewModal('force')">CLOSE</button>
+        </div>
+    </div>
+
+    <div id="howto-modal" class="modal-overlay" onclick="closeHowToModal(event)">
+        <div class="modal-box">
+            <h3>Markdown Guide</h3>
+            <div id="howto-content" class="modal-text"></div>
+            <button class="btn-sec" style="margin-top: 15px; width: 100%;" onclick="closeHowToModal('force')">CLOSE</button>
+        </div>
+    </div>
+
     <div id="toast-container" style="position: fixed; bottom: 20px; left: 20px; z-index: 1000; pointer-events: none;"></div>
     <script src="marked.umd.min.js"></script>
     <script src="main.js"></script>
