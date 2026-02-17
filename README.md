@@ -25,6 +25,7 @@ simply put xxmimm.exe in the root folder of your xxmi loader, for example, in
 ---
 
 ### todo
+- [ ] sort mods by characters (also warn user if more than one mod for a single character is being enabled)
 - [ ] download mods from gamebanana
 - [ ] profiles
 - [ ] import/export of mods or whole profiles/modpacks
