@@ -7,6 +7,7 @@ let currentBgIndex = 1;
 const maxBgImages = 9;
 const changeBgInterval = 30000;
 
+const validFolders = ["ZZMI", "GIMI", "SRMI", "WWMI", "HIMI", "EFMI"]; 
 
 const aboutApp = `
 # XXMI Manager
@@ -128,6 +129,14 @@ async function loadMods() {
 function renderList() {
     const container = document.getElementById('mod-container');
     container.innerHTML = '';
+
+    const totalMods = loadedModsCache.length;
+    const enabledMods = loadedModsCache.filter(m => m.installed).length;
+    
+    const countEl = document.getElementById('mods-count');
+    if (countEl) {
+        countEl.innerText = `Mods: ${totalMods}, Enabled: ${enabledMods}.`;
+    }
 
     const searchInput = document.getElementById('search-input');
     const sortSelect = document.getElementById('sort-select');
@@ -429,7 +438,6 @@ function closeImgModal(e) {
 window.onload = async () => {
     const parentName = await window.go.main.App.GetParentFolderName();
 
-    const validFolders = ["ZZMI", "GIMI", "SRMI", "WWMI", "HIMI", "EFMI"]; 
     if (validFolders.includes(parentName)) {
         appModeFolder = parentName;
         document.getElementById('app-title').innerText = `${appModeFolder} MOD MANAGER`;
