@@ -20,7 +20,8 @@ wails build
 ---
 ### install
 simply put xxmimm.exe in the root folder of your xxmi loader, for example, in
-`C:\Users\User\AppData\Roaming\XXMI Launcher\ZZMI` in case of ZZMI.
+`C:\Users\User\AppData\Roaming\XXMI Launcher\ZZMI` in case of ZZMI.<br>
+if you don't want to (or can't) build yourself, [download the binary here](https://github.com/lz-fkn/xxMI-Mod-Manager/releases/latest) (releases tab might be glitchy and showing older version above newer ones)
 
 ---
 
