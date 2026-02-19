@@ -332,7 +332,9 @@ async function startGame(withMods) {
         res = await window.go.main.App.StartGameWithoutMods(appModeFolder);
     }
 
-    if (res) {
+    if (res == "Success") {
+        showToast(res,0);
+    } else {
         showToast(res,1);
     }
 }
