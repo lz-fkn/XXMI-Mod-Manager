@@ -194,14 +194,15 @@ function renderList() {
     }
 }
 
-function showToast(message) {
+function showToast(message, isError = 0) {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
     toast.className = 'toast';
+    if (isError) {
+        toast.classList.add('error');
+    }
     toast.innerText = message;
-    
     container.appendChild(toast);
-
     setTimeout(() => {
         toast.classList.add('fade-out');
         setTimeout(() => toast.remove(), 300);
@@ -311,16 +312,16 @@ async function submit() {
 
     const res = await window.go.main.App.AddMod(name, desc, cmdValue, path, currentImg, url, loader);
     if(res === "Success") {
-        showToast("Mod imported successfully.");
+        showToast("Mod imported successfully.",0);
         showTab('list');
     } else {
-        showToast(res);
+        showToast(res,1);
     }
 }
 
 async function startGame(withMods) {
     if (!appModeFolder) {
-        showToast("Error: No loader detected.");
+        showToast("Error: No loader detected. (make sure you've placed the exe file correctly)",1);
         return;
     }
 
@@ -332,7 +333,7 @@ async function startGame(withMods) {
     }
 
     if (res) {
-        showToast(res);
+        showToast(res,1);
     }
 }
 
@@ -371,17 +372,17 @@ async function submitEdit() {
     const url = document.getElementById('edit-url').value;
     
     if (!name || !uuid) {
-        showToast("Name is required.");
+        showToast("Name is required.",1);
         return;
     }
 
     const res = await window.go.main.App.UpdateMod(uuid, name, desc, cmd, currentEditImgStr, url);
     
     if (res === "Success") {
-        showToast("Mod updated successfully.");
+        showToast("Mod updated successfully.",0);
         showTab('list');
     } else {
-        showToast(res);
+        showToast(res,1);
     }
 }
 
@@ -390,7 +391,7 @@ async function save() {
     const state = {};
     chks.forEach(c => state[c.dataset.id] = c.checked);
     await window.go.main.App.SaveChanges(state);
-    showToast("Symlinks updated.");
+    showToast("Symlinks updated.",0);
     loadMods();
 }
 
@@ -398,9 +399,9 @@ async function del(id) {
     if(confirm("Delete mod files permanently?")) {
         const res = await window.go.main.App.DeleteMod(id);
         if(res === "Success"){
-            showToast("Mod deleted successfully.");
+            showToast("Mod deleted successfully.",0);
         } else {
-            showToast(res);
+            showToast(res,1);
         }
         loadMods();
     }
