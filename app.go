@@ -1,3 +1,4 @@
+//go:build windows && amd64
 package main
 
 import (
@@ -331,6 +332,20 @@ func (a *App) StartGameWithoutMods(loader string) string {
 	cmd.Dir = gameDir
 	err = cmd.Start()
 	if err != nil {
+		return err.Error()
+	}
+	return "Success"
+}
+
+func (a *App) OpenModFolder(uuid string) string {
+	fullPath, err := filepath.Abs(filepath.Join(a.root, uuid))
+	if err != nil {
+		return err.Error()
+	}
+	// i dunno if it should be selected or nah
+	// cmd := exec.Command("explorer.exe", "/select,", fullPath)
+	cmd := exec.Command("explorer.exe", fullPath)
+	if err := cmd.Start(); err != nil {
 		return err.Error()
 	}
 	return "Success"

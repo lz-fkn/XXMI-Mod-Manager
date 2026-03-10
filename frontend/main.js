@@ -220,6 +220,14 @@ function openModal(uuid) {
     
     if (modalUuid) {
         modalUuid.innerText = `ID: ${mod.uuid}`;
+        modalUuid.style.cursor = 'pointer';
+        modalUuid.style.textDecoration = 'underline';
+        modalUuid.onclick = async () => {
+            const res = await window.go.main.App.OpenModFolder(mod.uuid);
+            if (res !== "Success") {
+                showToast(res, 1);
+            }
+        };
     }
 
     modalDesc.innerHTML = marked.parse(mod.description);
