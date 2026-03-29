@@ -42,3 +42,4 @@ if you don't want to (or can't) build yourself, [download the binary here](https
 
 ---
 Elzzie. 2026, MIT License. Background images are property of their respective copyright holders (HoYoverse, Kuro Games, Gryphline).
+ 
