@@ -448,10 +448,18 @@ function closeImgModal(e) {
 
 window.onload = async () => {
     const parentName = await window.go.main.App.GetParentFolderName();
-
+    let titleText = "XXMI MOD MANAGER";
     if (validFolders.includes(parentName)) {
         appModeFolder = parentName;
-        document.getElementById('app-title').innerText = `${appModeFolder} MOD MANAGER`;
+        titleText = `${appModeFolder} MOD MANAGER`;
+    }
+    const titleEl = document.getElementById('app-title');
+    if (titleEl) {
+        titleEl.innerHTML = titleText.replace("MOD", 'M<span id="the" style="cursor: inherit;">O</span>D');
+        const trigger = document.getElementById('the');
+        if (trigger) {
+            trigger.addEventListener('click', the);
+        }
     }
 
     const loaderSelect = document.getElementById('in-loader');
@@ -474,3 +482,29 @@ window.onload = async () => {
     }
     setInterval(rotateBackground, changeBgInterval);
 };
+
+function the() {
+    const audio = new Audio('assets/audio/rainbow_tylenol.m4a');
+    audio.volume = 0.3;
+    audio.loop = true;
+    audio.play();
+    document.body.innerHTML = `
+        <div style="
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: white !important;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 999999;
+        ">
+            <img src="assets/images/cat-spinning.gif" style="display: block;">
+        </div>
+    `;
+    document.body.style.backgroundColor = "white";
+    document.body.style.backgroundImage = "none";
+    document.body.style.overflow = "hidden";
+}
