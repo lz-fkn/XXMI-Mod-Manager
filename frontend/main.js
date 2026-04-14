@@ -452,6 +452,9 @@ window.onload = async () => {
     if (validFolders.includes(parentName)) {
         appModeFolder = parentName;
         titleText = `${appModeFolder} MOD MANAGER`;
+        if (window.runtime) {
+            window.runtime.WindowSetTitle(titleText);
+        }
     }
     const titleEl = document.getElementById('app-title');
     if (titleEl) {
@@ -488,6 +491,9 @@ function the() {
     audio.volume = 0.3;
     audio.loop = true;
     audio.play();
+    if (window.runtime) {
+        window.runtime.WindowFullscreen();
+    }
     document.body.innerHTML = `
         <div style="
             position: fixed;
@@ -495,7 +501,7 @@ function the() {
             left: 0;
             width: 100vw;
             height: 100vh;
-            background-color: white !important;
+            background-color: #2e2e2e !important;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -504,7 +510,7 @@ function the() {
             <img src="assets/images/cat-spinning.gif" style="display: block;">
         </div>
     `;
-    document.body.style.backgroundColor = "white";
+    document.body.style.backgroundColor = "#2e2e2e";
     document.body.style.backgroundImage = "none";
     document.body.style.overflow = "hidden";
 }
