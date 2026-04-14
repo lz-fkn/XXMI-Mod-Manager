@@ -185,15 +185,20 @@ function showToast(message, isError = 0) {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
     toast.className = 'toast';
+    
     if (isError) {
         toast.classList.add('error');
     }
+    
     toast.innerText = message;
     container.appendChild(toast);
+
+    const displayDuration = message.length >= 64 ? 10000 : 3000;
+
     setTimeout(() => {
         toast.classList.add('fade-out');
         setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    }, displayDuration);
 }
 
 function openModal(uuid) {
