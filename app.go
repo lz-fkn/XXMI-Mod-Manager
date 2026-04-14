@@ -17,14 +17,40 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"crypto/md5"
+	"crypto/rand"
+	"encoding/hex"
+	"encoding/json"
+	"io"
+	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/nfnt/resize"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"github.com/mholt/archiver/v3"
 
 	"xxmimm/internal/xxmi"
+	"xxmimm/internal/gamebanana"
 )
+
+type QuickModFile struct {
+	ID          int    `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Size        int64  `json:"size"`
+	MD5         string `json:"md5"`
+	DirectURL   string `json:"direct_url"`
+}
+
+type QuickModInfo struct {
+	Name        string         `json:"name"`
+	Description string         `json:"description"`
+	ImageURL    string         `json:"image_url"`
+	Files       []QuickModFile `json:"files"`
+}
+
 
 type App struct {
 	ctx  context.Context
@@ -97,27 +123,33 @@ func (a *App) GetMods(loader string) []Mod {
 }
 
 func (a *App) AddMod(name, desc, cmd, srcPath, previewB64, sourceURL, loader string) string {
-	if name == "" || srcPath == ""  { return "Missing Required Info" }
-	
-	id := uuid.New().String()
-	dest := filepath.Join(a.root, id)
-	os.MkdirAll(dest, 0755)
+    fmt.Printf("[AddMod] previewB64/path received: %s\n", previewB64) // DEBUG
+    
+    if name == "" || srcPath == ""  { return "Missing Required Info" }
+    
+    id := uuid.New().String()
+    dest := filepath.Join(a.root, id)
+    os.MkdirAll(dest, 0755)
 
-	copyCmd := exec.Command("robocopy", srcPath, dest, "/E", "/MT", "/R:0", "/W:0")
-	copyCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
-	
-	err := copyCmd.Run()
-	if err != nil {
-		if exitError, ok := err.(*exec.ExitError); ok {
-			if exitError.ExitCode() >= 8 {
-				return "Robocopy failed with exit code: " + strconv.Itoa(exitError.ExitCode())
-			}
-		} else {
-			return "Failed to run robocopy: " + err.Error()
-		}
-	}
-	var imgBytes []byte
+    copyCmd := exec.Command("robocopy", srcPath, dest, "/E", "/MT", "/R:0", "/W:0")
+    copyCmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true, CreationFlags: 0x08000000}
+    
+    err := copyCmd.Run()
+    if err != nil {
+        if exitError, ok := err.(*exec.ExitError); ok {
+            if exitError.ExitCode() >= 8 {
+                return "Robocopy failed with exit code: " + strconv.Itoa(exitError.ExitCode())
+            }
+        } else {
+            return "Failed to run robocopy: " + err.Error()
+        }
+    }
+    
+    var imgBytes []byte
+
+	// Check if it's a base64 data URL (contains comma)
 	if strings.Contains(previewB64, ",") {
+		fmt.Printf("[AddMod] Processing as base64 data URL\n")
 		raw := previewB64[strings.Index(previewB64, ",")+1:]
 		unprocBytes, _ := base64.StdEncoding.DecodeString(raw)
 		
@@ -141,11 +173,42 @@ func (a *App) AddMod(name, desc, cmd, srcPath, previewB64, sourceURL, loader str
 			jpeg.Encode(buf, resizedImg, &jpeg.Options{Quality: 85})
 			imgBytes = buf.Bytes()
 		}
+	} else if previewB64 != "" && !strings.HasPrefix(previewB64, "http") {
+		// It's a file path (not empty, not base64, not http URL)
+		fmt.Printf("[AddMod] Processing as file path: %s\n", previewB64)
+		unprocBytes, err := os.ReadFile(previewB64)
+		if err != nil {
+			fmt.Printf("[AddMod] Failed to read file: %v\n", err)
+		} else {
+			img, _, err := image.Decode(bytes.NewReader(unprocBytes))
+			if err != nil {
+				fmt.Printf("[AddMod] Failed to decode image: %v\n", err)
+			} else {
+				bounds := img.Bounds()
+				w, h := bounds.Dx(), bounds.Dy()
+				
+				var newW, newH int
+				if w > h {
+					newW = 512
+					newH = (h * 512) / w
+				} else {
+					newH = 512
+					newW = (w * 512) / h
+				}
+
+				resizedImg := resize.Resize(uint(newW), uint(newH), img, resize.Lanczos3)
+				
+				buf := new(bytes.Buffer)
+				jpeg.Encode(buf, resizedImg, &jpeg.Options{Quality: 85})
+				imgBytes = buf.Bytes()
+				fmt.Printf("[AddMod] Successfully processed image from path\n")
+			}
+		}
 	}
 
-	_, err = a.db.Exec("INSERT INTO mods VALUES (?,?,?,?,?,?,?,0)", id, name, desc, sourceURL, imgBytes, loader, cmd)
-	if err != nil { return err.Error() }
-	return "Success"
+    _, err = a.db.Exec("INSERT INTO mods VALUES (?,?,?,?,?,?,?,0)", id, name, desc, sourceURL, imgBytes, loader, cmd)
+    if err != nil { return err.Error() }
+    return "Success"
 }
 
 func (a *App) UpdateMod(uuid, name, desc, cmd, previewB64, sourceURL string) string {
@@ -349,4 +412,183 @@ func (a *App) OpenModFolder(uuid string) string {
 		return err.Error()
 	}
 	return "Success"
+}
+
+func (a *App) FetchQuickModInfo(url string) string {
+	data, errStr := gamebanana.FetchModInfo(url)
+	if errStr != "" {
+		return errStr
+	}
+	
+	var modData gamebanana.ModData
+	
+	// Handle both *ModData and ModData returns
+	if ptr, ok := data.(*gamebanana.ModData); ok {
+		modData = *ptr
+	} else if val, ok := data.(gamebanana.ModData); ok {
+		modData = val
+	} else {
+		return fmt.Sprintf("[quickimport] invalid data type: %T", data)
+	}
+	
+	// Return debug info as error if no files found
+	if len(modData.Files) == 0 {
+		return fmt.Sprintf("[debug] Type: %T, Name: %s, Files count: %d, Raw files: %+v", data, modData.Name, len(modData.Files), modData.Files)
+	}
+	
+	files := make([]QuickModFile, 0, len(modData.Files))
+	for _, f := range modData.Files {
+		files = append(files, QuickModFile{
+			ID:          f.ID,
+			Name:        f.Name,
+			Description: f.Description,
+			Size:        f.Size,
+			MD5:         f.MD5,
+			DirectURL:   f.DirectURL,
+		})
+	}
+	
+	info := QuickModInfo{
+		Name:        modData.Name,
+		Description: modData.Description,
+		ImageURL:    modData.ImageURL,
+		Files:       files,
+	}
+	
+	jsonBytes, err := json.Marshal(info)
+	if err != nil {
+		return fmt.Sprintf("[quickimport] json marshal error: %v", err)
+	}
+	
+	return string(jsonBytes)
+}
+
+// Step 2: Download, verify and extract selected file
+func (a *App) DownloadAndExtract(fileID int, directURL string, size int64, md5hash, imageURL, modName, modDesc, sourceURL string) string {
+	result := map[string]string{
+		"name":        modName,
+		"description": modDesc,
+		"source_url":  sourceURL,
+	}
+	
+	// Generate temp folder names (8 random hex digits)
+	randBytes := make([]byte, 4)
+	rand.Read(randBytes)
+	hexStr := hex.EncodeToString(randBytes)
+	
+	downloadDir := filepath.Join(os.TempDir(), fmt.Sprintf("xxmimmD-%s", hexStr))
+	extractDir := filepath.Join(os.TempDir(), fmt.Sprintf("xxmimmE-%s", hexStr))
+	
+	os.MkdirAll(downloadDir, 0755)
+	os.MkdirAll(extractDir, 0755)
+	
+	// Extract filename from URL or use original name
+	fileName := filepath.Base(directURL)
+	if fileName == "" || fileName == "." {
+		fileName = "modfile.zip"
+	}
+	// Clean filename
+	fileName = strings.Split(fileName, "?")[0]
+	
+	client := &http.Client{Timeout: 5 * time.Minute}
+	resp, err := client.Get(directURL)
+	if err != nil {
+		os.RemoveAll(downloadDir)
+		return fmt.Sprintf("[download] failed: %v", err)
+	}
+	defer resp.Body.Close()
+	
+	if resp.StatusCode != http.StatusOK {
+		os.RemoveAll(downloadDir)
+		return fmt.Sprintf("[download] server returned status: %d", resp.StatusCode)
+	}
+	
+	filePath := filepath.Join(downloadDir, fileName)
+	out, err := os.Create(filePath)
+	if err != nil {
+		os.RemoveAll(downloadDir)
+		return fmt.Sprintf("[download] create file failed: %v", err)
+	}
+	
+	written, err := io.Copy(out, resp.Body)
+	out.Close()
+	if err != nil {
+		os.RemoveAll(downloadDir)
+		return fmt.Sprintf("[download] write failed: %v", err)
+	}
+	
+	// Verify size first
+	if written != size {
+		os.RemoveAll(downloadDir)
+		return fmt.Sprintf("[verify] size mismatch: got %d bytes, expected %d", written, size)
+	}
+	
+	// Verify MD5 hash
+	if md5hash != "" {
+		file, err := os.Open(filePath)
+		if err != nil {
+			os.RemoveAll(downloadDir)
+			return fmt.Sprintf("[verify] open for hash failed: %v", err)
+		}
+		
+		hasher := md5.New()
+		if _, err := io.Copy(hasher, file); err != nil {
+			file.Close()
+			os.RemoveAll(downloadDir)
+			return fmt.Sprintf("[verify] hash computation failed: %v", err)
+		}
+		file.Close()
+		
+		computedHash := hex.EncodeToString(hasher.Sum(nil))
+		if computedHash != md5hash {
+			os.RemoveAll(downloadDir)
+			return fmt.Sprintf("[verify] hash mismatch: got %s, expected %s", computedHash, md5hash)
+		}
+	}
+	
+	// Extract archive (handles zip, rar, 7z)
+	if err := archiver.Unarchive(filePath, extractDir); err != nil {
+		os.RemoveAll(downloadDir)
+		os.RemoveAll(extractDir)
+		return fmt.Sprintf("[extract] failed (not a valid archive?): %v", err)
+	}
+	
+	result["extract_path"] = extractDir
+	result["temp_download_dir"] = downloadDir
+	
+	// Download preview image
+		// Download preview image
+	if imageURL != "" {
+		imgResp, err := client.Get(imageURL)
+		if err == nil && imgResp.StatusCode == http.StatusOK {
+			imgPath := filepath.Join(downloadDir, "XXMIMM-Preview.jpg")
+			imgOut, err := os.Create(imgPath)
+			if err == nil {
+				_, copyErr := io.Copy(imgOut, imgResp.Body)
+				imgOut.Close()
+				if copyErr == nil {
+					result["preview_path"] = imgPath
+					fmt.Printf("%s", imgPath)
+					if _, err := os.Stat(imgPath); err != nil {
+						fmt.Printf("[DownloadAndExtract] WARNING: Image file does not exist after save: %v\n", err)
+					}
+				}
+			}
+			imgResp.Body.Close()
+		}
+	}
+	
+	jsonBytes, err := json.Marshal(result)
+	if err != nil {
+		return fmt.Sprintf("[quickimport] result marshal error: %v", err)
+	}
+	
+	return string(jsonBytes)
+}
+
+// Cleanup temp directories (call this after successful import or on cancel)
+func (a *App) CleanupTempDirs(dirs []string) {
+	for _, dir := range dirs {
+		os.RemoveAll(dir)
+	}
 }

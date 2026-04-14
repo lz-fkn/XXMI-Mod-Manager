@@ -295,6 +295,14 @@ select option {
     opacity: 0.6;
 }
 
+#modal-desc img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 10px auto; /* Optional: centers the image and adds spacing */
+    border-radius: 4px; /* Optional: matches your UI's rounded corners */
+}
+
 .toast {
     background: #1a1d26;
     color: #eee;

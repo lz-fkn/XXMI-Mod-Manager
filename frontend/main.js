@@ -3,28 +3,15 @@ let currentImg = "";
 let loadedModsCache = [];
 let currentEditImgStr = "";
 
+let quickModTempData = null;
+let quickModSourceURL = "";
+let quickModTempDirs = [];
+
 let currentBgIndex = 1;
 const maxBgImages = 9;
 const changeBgInterval = 30000;
 
 const validFolders = ["ZZMI", "GIMI", "SRMI", "WWMI", "HIMI", "EFMI"]; 
-
-const aboutApp = `
-# XXMI Manager
-*rather simple mod manager for XXMI mods (ZZZ, GI, HSR, HI3, WuWa, EF)*
-
----
-
-made it when i realised that i need some easy way to toggle the mods on and off on the fly, so here it is. it works by creating a symlink to the mod, simple as that.
-(yes i am aware that other solutions already exist, i've realised that only after publishing the v1.0.0... pick your poison either way)<br>
-
-used stuff:
-* [Golang](https://go.dev/) (go1.25.5 windows/amd64)
-* [Wails](https://wails.io/) (v2.11.0)
-* [Marked.js](https://github.com/markedjs/marked) (v17.0.1)
-
-Elzzie. 2026, MIT License. Background images are property of their respective copyright holders (HoYoverse, Kuro Games, Gryphline).<br>
-`;
 
 const howToMarkdown = `
 *\\*italic\\**<br>
@@ -322,6 +309,10 @@ async function submit() {
     if(res === "Success") {
         showToast("Mod imported successfully.",0);
         showTab('list');
+        if (quickModTempDirs.length > 0) {
+            await window.go.main.App.CleanupTempDirs(quickModTempDirs);
+            quickModTempDirs = [];
+        }
     } else {
         showToast(res,1);
     }
@@ -417,23 +408,6 @@ async function del(id) {
     }
 }
 
-function renderAbout() {
-    const container = document.getElementById('about-content');
-    if (container) {
-        container.innerHTML = marked.parse(aboutApp);
-
-        container.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const url = link.getAttribute('href');
-                if (url) {
-                    window.go.main.App.OpenBrowser(url);
-                }
-            });
-        });
-    }
-}
-
 function openImgModal(src) {
     if (!src) return;
     document.getElementById('img-modal-content').src = src;
@@ -471,7 +445,6 @@ window.onload = async () => {
     }
 
     loadMods();
-    renderAbout();
     
     const l1 = document.getElementById('bg-layer-1');
     if (l1) {
@@ -513,4 +486,131 @@ function the() {
     document.body.style.backgroundColor = "#2e2e2e";
     document.body.style.backgroundImage = "none";
     document.body.style.overflow = "hidden";
+}
+
+async function quickModImport() {
+    const url = prompt("Enter GameBanana mod URL:");
+    if (!url || !url.trim()) return;
+    
+    quickModSourceURL = url.trim();
+    showToast("Fetching mod info...", 0);
+    
+    try {
+        const res = await window.go.main.App.FetchQuickModInfo(quickModSourceURL);
+        
+        if (res.startsWith('[')) {
+            showToast(res, 1);
+            return;
+        }
+        
+        quickModTempData = JSON.parse(res);
+        
+        if (!quickModTempData.files || quickModTempData.files.length === 0) {
+            showToast("No downloadable files found for this mod.", 1);
+            return;
+        }
+        
+        if (quickModTempData.files.length === 1) {
+            await processQuickModSelection(quickModTempData.files[0]);
+        } else {
+            showQuickModSelector(quickModTempData.files);
+        }
+        
+    } catch (err) {
+        showToast("Failed to fetch mod info: " + err.toString(), 1);
+    }
+}
+
+function showQuickModSelector(files) {
+    closeQuickModModal();
+    
+    const modal = document.createElement('div');
+    modal.id = 'quickmod-modal';
+    modal.className = 'modal-overlay active';
+    modal.innerHTML = `
+        <div class="modal-box" style="max-width: 600px; max-height: 70vh; display: flex; flex-direction: column;">
+            <h3 style="margin-bottom: 15px;">Select File to Download</h3>
+            <div style="overflow-y: auto; flex: 1; margin-bottom: 15px;">
+                ${files.map(f => {
+                    const sizeMB = (f.size / (1024*1024)).toFixed(2);
+                    const desc = f.description ? f.description.substring(0, 100) + (f.description.length > 100 ? '...' : '') : 'No description';
+                    return `
+                        <div class="quickmod-file-item" onclick='selectQuickModFile(${f.id})' style="
+                            padding: 12px; 
+                            margin: 8px 0; 
+                            background: rgba(255,255,255,0.05); 
+                            border: 1px solid rgba(255,255,255,0.1);
+                            border-radius: 4px; 
+                            cursor: pointer;
+                            transition: background 0.2s;
+                        " onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='rgba(255,255,255,0.05)'">
+                            <div style="font-weight: bold; margin-bottom: 4px;">${f.name}</div>
+                            <div style="font-size: 0.85em; color: #aaa; margin-bottom: 4px;">${desc}</div>
+                            <div style="font-size: 0.75em; color: #666;">ID: ${f.id} | Size: ${sizeMB} MB</div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+            <button class="btn-sec" style="width: 100%;" onclick="closeQuickModModal()">Cancel</button>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    modal.onclick = (e) => { if(e.target === modal) closeQuickModModal(); };
+}
+
+function closeQuickModModal() {
+    const modal = document.getElementById('quickmod-modal');
+    if (modal) modal.remove();
+}
+
+async function selectQuickModFile(fileID) {
+    closeQuickModModal();
+    const file = quickModTempData.files.find(f => f.id === fileID);
+    if (!file) {
+        showToast("File not found in selection.", 1);
+        return;
+    }
+    await processQuickModSelection(file);
+}
+
+async function processQuickModSelection(file) {
+    showToast("File is now being downloaded and extracted. Please wait for a bit...", 0);
+    const res = await window.go.main.App.DownloadAndExtract(
+        file.id,
+        file.direct_url,
+        file.size,
+        file.md5,
+        quickModTempData.image_url,
+        quickModTempData.name,
+        quickModTempData.description,
+        quickModSourceURL
+    );
+    
+    if (res.startsWith('[')) {
+        showToast(res, 1);
+        return;
+    }
+    
+    const data = JSON.parse(res);
+    console.log("DownloadAndExtract result:", data);
+    console.log("preview_path:", data.preview_path);
+    
+    quickModTempDirs = [data.temp_download_dir, data.extract_path].filter(Boolean);
+    
+    document.getElementById('in-path').value = data.extract_path;
+    document.getElementById('in-name').value = data.name || '';
+    document.getElementById('in-desc').value = data.description || '';
+    document.getElementById('in-url').value = data.source_url || '';
+    
+    if (data.preview_path) {
+        currentImg = data.preview_path;
+        console.log("Set currentImg to:", currentImg);
+    } else {
+        currentImg = "";
+    }
+    
+    showTab('add');
+    showToast("Mod ready! Review details and click ADD TO COLLECTION.", 0);
+    showToast("(The Preview Image path is supposed to be empty, don't worry about it)", 0);
 }

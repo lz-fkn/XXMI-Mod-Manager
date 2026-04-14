@@ -25,15 +25,15 @@ wails build
 ### install
 simply put xxmimm.exe in the root folder of your xxmi loader, for example, in
 `C:\Users\User\AppData\Roaming\XXMI Launcher\ZZMI` in case of ZZMI.<br>
-if you don't want to (or can't) build yourself, [download the binary here](https://github.com/lz-fkn/xxMI-Mod-Manager/releases/latest) (releases tab might be glitchy and showing older version above newer ones)
+if you don't want to (or can't) build yourself, [download the binary here](https://github.com/lz-fkn/XXMI-Mod-Manager/releases/latest) (releases tab might be glitchy and showing older version above newer ones)
 
 ---
 
 ### todo
 - [ ] sort mods by characters (also warn user if more than one mod for a single character is being enabled)
-- [ ] download mods from gamebanana
 - [ ] profiles
 - [ ] import/export of mods or whole profiles/modpacks
+- [partially] download mods from gamebanana
 - [x] autodetect of the game
 - [x] mod sorting by game
 - [x] "play with/without mods" buttons

@@ -1,10 +1,11 @@
-build/bin/
-frontend/wailsjs/
-frontend/node_modules/
+/build/bin/
+/frontend/wailsjs/
+/frontend/node_modules/
 /images/
 *.exe
 *.exe~
-build/windows/installer/
+/build/windows/installer/
 *.nsi
 *.nsh
 /dev_stuff/
+/tests/

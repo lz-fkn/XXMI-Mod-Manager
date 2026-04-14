@@ -15,8 +15,8 @@
             <h4 id="mods-count" style="letter-spacing: 1px;">Mods: N/A, Enabled: N/A.</h4>
             <div class="tabs">
                 <button id="btn-list" class="tab-btn active" onclick="showTab('list')">Collection</button>
-                <button id="btn-add" class="tab-btn" onclick="showTab('add')">Import Mod</button>
-                <button id="btn-about" class="tab-btn" onclick="showTab('about')">About</button>
+                <button id="btn-quick" class="tab-btn" onclick="quickModImport()">Quick Mod Import</button>
+                <button id="btn-add" class="tab-btn" onclick="showTab('add')">Manual Mod Import</button>
             </div>
         </div>
 
@@ -136,12 +136,6 @@
                     <button class="btn-sec" onclick="showTab('list')">CANCEL</button>
                     <button class="btn-main" onclick="submitEdit()">SAVE CHANGES</button>
                 </div>
-            </div>
-        </div>
-        <div id="tab-about" class="content">
-            <div class="form-view">
-                <div id="about-content" class="modal-text">
-                    </div>
             </div>
         </div>
     </div>

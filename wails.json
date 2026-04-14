@@ -7,13 +7,12 @@
   "frontend:dev:watcher": "",
   "frontend:dev:serverUrl": "",
   "author": {
-    "name": "Elzzie",
-    "email": "fractus.lol@proton.me"
+    "name": "Elzzie"
   },
   "info": {
     "companyName": "Elzzie",
     "productName": "XXMI Mod Manager",
-    "productVersion": "1.3.5",
+    "productVersion": "1.4.0",
     "copyright": "MIT License"
   }
 }
