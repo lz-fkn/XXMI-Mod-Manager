@@ -123,7 +123,7 @@ func (a *App) GetMods(loader string) []Mod {
 }
 
 func (a *App) AddMod(name, desc, cmd, srcPath, previewB64, sourceURL, loader string) string {
-    fmt.Printf("[AddMod] previewB64/path received: %s\n", previewB64) // DEBUG
+    fmt.Printf("[AddMod] previewB64/path received: %s\n", previewB64)
     
     if name == "" || srcPath == ""  { return "Missing Required Info" }
     
@@ -147,7 +147,6 @@ func (a *App) AddMod(name, desc, cmd, srcPath, previewB64, sourceURL, loader str
     
     var imgBytes []byte
 
-	// Check if it's a base64 data URL (contains comma)
 	if strings.Contains(previewB64, ",") {
 		fmt.Printf("[AddMod] Processing as base64 data URL\n")
 		raw := previewB64[strings.Index(previewB64, ",")+1:]
@@ -174,7 +173,6 @@ func (a *App) AddMod(name, desc, cmd, srcPath, previewB64, sourceURL, loader str
 			imgBytes = buf.Bytes()
 		}
 	} else if previewB64 != "" && !strings.HasPrefix(previewB64, "http") {
-		// It's a file path (not empty, not base64, not http URL)
 		fmt.Printf("[AddMod] Processing as file path: %s\n", previewB64)
 		unprocBytes, err := os.ReadFile(previewB64)
 		if err != nil {
@@ -422,7 +420,6 @@ func (a *App) FetchQuickModInfo(url string) string {
 	
 	var modData gamebanana.ModData
 	
-	// Handle both *ModData and ModData returns
 	if ptr, ok := data.(*gamebanana.ModData); ok {
 		modData = *ptr
 	} else if val, ok := data.(gamebanana.ModData); ok {
@@ -431,7 +428,6 @@ func (a *App) FetchQuickModInfo(url string) string {
 		return fmt.Sprintf("[quickimport] invalid data type: %T", data)
 	}
 	
-	// Return debug info as error if no files found
 	if len(modData.Files) == 0 {
 		return fmt.Sprintf("[debug] Type: %T, Name: %s, Files count: %d, Raw files: %+v", data, modData.Name, len(modData.Files), modData.Files)
 	}
@@ -463,7 +459,6 @@ func (a *App) FetchQuickModInfo(url string) string {
 	return string(jsonBytes)
 }
 
-// Step 2: Download, verify and extract selected file
 func (a *App) DownloadAndExtract(fileID int, directURL string, size int64, md5hash, imageURL, modName, modDesc, sourceURL string) string {
 	result := map[string]string{
 		"name":        modName,
@@ -471,7 +466,6 @@ func (a *App) DownloadAndExtract(fileID int, directURL string, size int64, md5ha
 		"source_url":  sourceURL,
 	}
 	
-	// Generate temp folder names (8 random hex digits)
 	randBytes := make([]byte, 4)
 	rand.Read(randBytes)
 	hexStr := hex.EncodeToString(randBytes)
@@ -482,12 +476,10 @@ func (a *App) DownloadAndExtract(fileID int, directURL string, size int64, md5ha
 	os.MkdirAll(downloadDir, 0755)
 	os.MkdirAll(extractDir, 0755)
 	
-	// Extract filename from URL or use original name
 	fileName := filepath.Base(directURL)
 	if fileName == "" || fileName == "." {
 		fileName = "modfile.zip"
 	}
-	// Clean filename
 	fileName = strings.Split(fileName, "?")[0]
 	
 	client := &http.Client{Timeout: 5 * time.Minute}
@@ -517,13 +509,11 @@ func (a *App) DownloadAndExtract(fileID int, directURL string, size int64, md5ha
 		return fmt.Sprintf("[download] write failed: %v", err)
 	}
 	
-	// Verify size first
 	if written != size {
 		os.RemoveAll(downloadDir)
 		return fmt.Sprintf("[verify] size mismatch: got %d bytes, expected %d", written, size)
 	}
 	
-	// Verify MD5 hash
 	if md5hash != "" {
 		file, err := os.Open(filePath)
 		if err != nil {
@@ -546,7 +536,6 @@ func (a *App) DownloadAndExtract(fileID int, directURL string, size int64, md5ha
 		}
 	}
 	
-	// Extract archive (handles zip, rar, 7z)
 	if err := archiver.Unarchive(filePath, extractDir); err != nil {
 		os.RemoveAll(downloadDir)
 		os.RemoveAll(extractDir)
@@ -555,9 +544,7 @@ func (a *App) DownloadAndExtract(fileID int, directURL string, size int64, md5ha
 	
 	result["extract_path"] = extractDir
 	result["temp_download_dir"] = downloadDir
-	
-	// Download preview image
-		// Download preview image
+
 	if imageURL != "" {
 		imgResp, err := client.Get(imageURL)
 		if err == nil && imgResp.StatusCode == http.StatusOK {
@@ -586,7 +573,6 @@ func (a *App) DownloadAndExtract(fileID int, directURL string, size int64, md5ha
 	return string(jsonBytes)
 }
 
-// Cleanup temp directories (call this after successful import or on cancel)
 func (a *App) CleanupTempDirs(dirs []string) {
 	for _, dir := range dirs {
 		os.RemoveAll(dir)
