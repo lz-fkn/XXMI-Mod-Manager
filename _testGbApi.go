@@ -22,12 +22,12 @@ func main() {
 	fmt.Printf("Mod Name: %s\n", mod.Name)
 	fmt.Printf("Description: %s\n", mod.Description)
 	fmt.Printf("Image: %s\n", mod.ImageURL)
-	fmt.Printf("1st file id: %d\n", mod.Files[1].ID)
-	fmt.Printf("1st file name: %s\n", mod.Files[1].Name)
-	fmt.Printf("1st file desc: %s\n", mod.Files[1].Description)
-	fmt.Printf("1st file url: %s\n", mod.Files[1].DirectURL)
-	fmt.Printf("1st file size: %d\n", mod.Files[1].Size)
-	fmt.Printf("1st file hash: %s\n", mod.Files[1].MD5)
+	fmt.Printf("1st file id: %d\n", mod.Files[0].ID)
+	fmt.Printf("1st file name: %s\n", mod.Files[0].Name)
+	fmt.Printf("1st file desc: %s\n", mod.Files[0].Description)
+	fmt.Printf("1st file url: %s\n", mod.Files[0].DirectURL)
+	fmt.Printf("1st file size: %d\n", mod.Files[0].Size)
+	fmt.Printf("1st file hash: %s\n", mod.Files[0].MD5)
 	fmt.Printf("everything files: %s\n", mod.Files)
 	
 }
