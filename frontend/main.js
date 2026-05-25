@@ -140,10 +140,23 @@ function renderList() {
 
     displayMods.sort((a, b) => {
         if (query) {
-            const aNameMatch = a.name.toLowerCase().includes(query);
-            const bNameMatch = b.name.toLowerCase().includes(query);
-            if (aNameMatch && !bNameMatch) return -1;
-            if (!aNameMatch && bNameMatch) return 1;
+            const getMatchTier = (mod) => {
+                const nameLower = mod.name.toLowerCase();
+                const descLower = mod.description ? mod.description.toLowerCase() : "";
+                const wordBoundaryRegex = new RegExp(`\\b${query}\\b`);
+
+                if (wordBoundaryRegex.test(nameLower)) return 1;
+                if (nameLower.includes(query)) return 2;
+                if (descLower.includes(query)) return 3;
+                return 4;
+            };
+
+            const tierA = getMatchTier(a);
+            const tierB = getMatchTier(b);
+
+            if (tierA !== tierB) {
+                return tierA - tierB;
+            }
         }
 
         if (sortType === 'alpha') {
